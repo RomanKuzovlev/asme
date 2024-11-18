@@ -1,20 +1,29 @@
 package main
 
 import (
+	"log"
+	"net"
+
+	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/proto"
+	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/server"
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/matching"
-	ob "github.com/muzykantov/orderbook"
-	"github.com/shopspring/decimal"
+	"google.golang.org/grpc"
 )
 
 func main() {
 	engine := matching.NewMatchingEngine()
 
-	orderID := "order-1"
-	side := ob.Buy
-	quantity := decimal.NewFromFloat(1.5)
-	price := decimal.NewFromFloat(1000.0)
+	grpcServer := grpc.NewServer()
+	matchingServer := server.NewGRPCServer(engine)
+	proto.RegisterMatchingEngineServiceServer(grpcServer, matchingServer)
 
-	engine.PlaceOrder(orderID, side, quantity, price)
+	lis, err := net.Listen("tcp", ":50051")
+	if err != nil {
+		log.Fatalf("Failed to listen: %v", err)
+	}
 
-	engine.ListOrders()
+	log.Println("gRPC server for Matching Engine is running on port 50051...")
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("Failed to serve: %v", err)
+	}
 }

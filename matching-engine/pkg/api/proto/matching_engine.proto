@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package matching_engine;
+
+option go_package = "github.com/RomanKuzovlev/asme/matching-engine/pkg/api/proto;proto";
+
+service MatchingEngineService {
+    rpc AddOrder (AddOrderRequest) returns (AddOrderResponse);
+}
+
+message AddOrderRequest
+{
+    string order_id = 1;
+    string side = 2; // "buy" or "sell"
+    double quantity = 3;
+    double price = 4;
+}
+
+message AddOrderResponse
+{
+    bool success = 1;
+    string message = 2;
+}
