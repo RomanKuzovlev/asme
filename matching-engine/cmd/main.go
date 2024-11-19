@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"net"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/proto"
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/server"
@@ -12,7 +15,6 @@ import (
 
 func main() {
 	engine := matching.NewMatchingEngine()
-
 	grpcServer := grpc.NewServer()
 	matchingServer := server.NewGRPCServer(engine)
 	proto.RegisterMatchingEngineServiceServer(grpcServer, matchingServer)
@@ -22,8 +24,18 @@ func main() {
 		log.Fatalf("Failed to listen: %v", err)
 	}
 
+	go func() {
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve: %v", err)
+		}
+	}()
 	log.Println("gRPC server for Matching Engine is running on port 50051...")
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
-	}
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
+
+	<-stop
+	log.Println("Shutting down gRPC server...")
+	grpcServer.GracefulStop()
+	log.Println("Server stopped gracefully.")
 }
