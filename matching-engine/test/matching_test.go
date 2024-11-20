@@ -2,6 +2,7 @@ package test
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"log"
@@ -10,6 +11,7 @@ import (
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/proto"
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/server"
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/matching"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/test/bufconn"
@@ -20,9 +22,22 @@ const bufSize = 1024 * 1024
 var lis *bufconn.Listener
 
 func init() {
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, proceeding with system environment variables")
+	}
+
+	tradingPair := os.Getenv("TRADING_PAIR")
+	if tradingPair == "" {
+		log.Fatalf("TRADING_PAIR environment variable is required")
+	}
+
 	lis = bufconn.Listen(bufSize)
 	grpcServer := grpc.NewServer()
-	matchingEngine := matching.NewMatchingEngine()
+	matchingEngine, err := matching.NewMatchingEngine(tradingPair)
+	if err != nil {
+		log.Fatalf("Failed to initialize matching engine: %v", err)
+	}
+
 	proto.RegisterMatchingEngineServiceServer(grpcServer, server.NewGRPCServer(matchingEngine))
 	go func() {
 		if err := grpcServer.Serve(lis); err != nil {
@@ -47,6 +62,7 @@ func TestAddOrder(t *testing.T) {
 		Side:     "buy",
 		Quantity: 10.0,
 		Price:    100.0,
+		Pair:     "BTC/USD",
 	})
 	require.NoError(t, err)
 	require.NotNil(t, resp)

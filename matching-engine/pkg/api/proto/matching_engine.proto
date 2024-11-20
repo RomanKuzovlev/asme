@@ -14,6 +14,7 @@ message AddOrderRequest
     string side = 2; // "buy" or "sell"
     double quantity = 3;
     double price = 4;
+    string pair = 5; // format: "BTC/USD"
 }
 
 message AddOrderResponse

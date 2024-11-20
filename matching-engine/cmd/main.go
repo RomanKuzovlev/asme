@@ -10,11 +10,25 @@ import (
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/proto"
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/api/server"
 	"github.com/RomanKuzovlev/asme/matching-engine/pkg/matching"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 )
 
 func main() {
-	engine := matching.NewMatchingEngine()
+	if err := godotenv.Load(); err != nil {
+		log.Println("No .env file found, proceeding with system environment variables")
+	}
+
+	tradingPair := os.Getenv("TRADING_PAIR")
+	if tradingPair == "" {
+		log.Fatalf("TRADING_PAIR environment variable is required")
+	}
+
+	engine, err := matching.NewMatchingEngine(tradingPair)
+	if err != nil {
+		log.Fatalf("Failed to initialize matching engine: %v", err)
+	}
+
 	grpcServer := grpc.NewServer()
 	matchingServer := server.NewGRPCServer(engine)
 	proto.RegisterMatchingEngineServiceServer(grpcServer, matchingServer)
