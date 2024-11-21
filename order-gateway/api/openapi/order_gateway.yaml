@@ -1,0 +1,58 @@
+openapi: 3.0.1
+info:
+  title: Order Gateway API
+  description: REST API for submitting and querying orders via the Order Gateway.
+  version: "1.0"
+servers:
+  - url: http://localhost:8080
+paths:
+  /orders:
+    post:
+      summary: Submit a new order
+      operationId: createOrder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderRequest'
+      responses:
+        "200":
+          description: Order successfully processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderResponse'
+        "400":
+          description: Bad Request
+        "500":
+          description: Internal Server Error
+components:
+  schemas:
+    OrderRequest:
+      type: object
+      properties:
+        order_id:
+          type: string
+        side:
+          type: string
+          enum: [buy, sell]
+        quantity:
+          type: number
+        price:
+          type: number
+        pair:
+          type: string
+      required:
+        - order_id
+        - side
+        - quantity
+        - price
+        - pair
+    OrderResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
