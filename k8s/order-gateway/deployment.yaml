@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-gateway
+  labels:
+    app: order-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: order-gateway
+  template:
+    metadata:
+      labels:
+        app: order-gateway
+    spec:
+      containers:
+      - name: order-gateway
+        image: order-gateway:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        env:
+        - name: MATCHING_ENGINE_ADDRESS
+          value: "matching-engine:50051"
